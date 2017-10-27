@@ -1,0 +1,312 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/px-card/px-card.html">
+<link rel="import" href="../../bower_components/px-vis-timeseries/px-vis-timeseries.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/px-gauge/px-gauge.html">
+<script src="../../bower_components/polymer-global-variables/dist/polymer-global-variables.js" charset="utf-8"></script>
+
+<dom-module id="winddata-view">
+  <template>
+	<style is="custom-style">
+		#gauge1 {
+			width: 50%;
+			--px-gauge-chart-fill-normal-color : red !important;
+			/* --px-gauge-chart-fill-anomaly-color: firebrick; 
+			--px-gauge-chart-fill-abnormal-color: red;*/
+		}
+		
+		#gauge2 {
+			width: 50%;
+			--px-gauge-chart-fill-normal-color : orange;
+		}
+		
+		#gauge3 {
+			width: 50%;
+			--px-gauge-chart-fill-normal-color : blue;
+		}		
+	</style>
+	
+    <px-card header-text="Wind Turbine Time Series Real-time Data">
+		
+		<div style="margin-bottom: 35px">
+			<b>Power Capacity</b>
+		</div>
+		<center>
+			<div id='gaugemain'>
+			  <div id='turbine1Div' style="float:left; display:inline; width: 33%;">
+			  	Turbine 1 
+			     <px-gauge id="gauge1" value="[[globals.gaugeValue1]]" max="1500" unit="kW" normal='[[0,1500]]'></px-gauge>
+			     <!--  error='[[0,12],[79,100]]' abnormal='[[12,32],[68,79]]' anomaly='[[32,45],[54,68]]' normal='[[45,54]]' -->
+			  </div>
+			  <div id='turbine2Div' style="float:left; display:inline; width: 33%;">
+			  	Turbine 2 
+			     <px-gauge id="gauge2" value="[[globals.gaugeValue2]]" max="2300" unit="kW" abnormal='[[0,2300]]'></px-gauge>
+			  </div>
+			  <div id='turbine3Div' style="float:left; display:inline; width: 33%;">
+			  	Turbine 3
+			     <px-gauge id="gauge3" value="[[globals.gaugeValue3]]" max="3600" unit="kW" anomaly='[[0,3600]]'></px-gauge>
+			  </div>
+			</div>
+		</center>
+			
+		<div id='tsmain'>
+		  <div id='powerOutputDiv' style="float:left; width: 49%;margin-top: 35px">
+		  	 <b>Power Output Time Series Data</b>
+		     <px-vis-timeseries
+		                 id="timeseriesPowerOutput"
+		                 options='{
+		                     "width": "600",
+		                     "height": "300",
+		                     "enableTooltip": "true",
+		                     "registerLocation": "center",
+		                     "selectionType": "xy",
+		                     "includeAllSeries": "true",
+		                     "prevent-resize": "true" 
+		                 }'
+		                 chart-data={{po1ChartData}} 
+						series-config='{"Turbine1":{"name":"Turbine1","x":"x","y":"Turbine1","yAxisUnit":"kW"},"Turbine2":{"name":"Turbine2","x":"x","y":"Turbine2","yAxisUnit":"kW"},"Turbine3":{"name":"Turbine3","x":"x","y":"Turbine3","yAxisUnit":"kW"}}' >
+	            </px-vis-timeseries>
+		  </div>
+		  <div id='windSpeedDiv' style="float:left; width: 49%;;margin-top: 35px">   
+		  		<b>Wind Speed Time Series Data</b>
+				<px-vis-timeseries
+				                 id="timeseriesWindSpeed"
+				                 options='{
+				                     "width": "600",
+				                     "height": "300",
+				                     "enableTooltip": "true",
+				                     "registerLocation": "center",
+				                     "selectionType": "xy",
+				                     "includeAllSeries": "true",
+				                     "prevent-resize": "true" 
+				                 }'
+				                 series-config='{"Wind Speed": {"type":"line","x": "x","y": "y","yAxisUnit": "m/s"}}'  
+				                 chart-data={{wsChartData}}>
+             	</px-vis-timeseries>
+		  </div>
+		</div>
+
+      <!-- Loads data from a custom wind data microservice.  -->
+      <!-- <iron-ajax url="/windy/services/windservices/yearly_data/sensor_id/Compressor-2015:CompressionRatio?order=asc&starttime=1y-ago" id="tsQueryElement" last-response="{{rawTsData}}" auto></iron-ajax> -->
+	  
+	  <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="po1QueryElement" body="{{po1timeseriesQuery}}" last-response="{{rawPo1Data}}" method="POST" content-type="application/json" auto></iron-ajax>
+      <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="po2QueryElement" body="{{po2timeseriesQuery}}" last-response="{{rawPo2Data}}" method="POST" content-type="application/json" auto></iron-ajax>
+      <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="po3QueryElement" body="{{po3timeseriesQuery}}" last-response="{{rawPo3Data}}" method="POST" content-type="application/json" auto></iron-ajax>
+      <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="poQueryElement" body="{{potimeseriesQuery}}" last-response="{{rawPoData}}" method="POST" content-type="application/json"></iron-ajax>
+      <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="wsQueryElement" body="{{wstimeseriesQuery}}" last-response="{{rawWsData}}" method="POST" content-type="application/json" auto on-response="_onResponse"></iron-ajax> 
+        
+    </px-card>
+  </template>
+  <script>
+  Polymer({
+      is: 'winddata-view',
+      properties: {
+   	 	 po1ChartData: {
+         	type: Array,
+         	notify: true
+         },
+         rawPoData: {
+           type: Object,
+           observer: '_formatPoDataForChart'
+         },
+        rawPo1Data: {
+          type: Object,
+          observer: '_formatPo1DataForChart'
+        },
+        rawPo2Data: {
+            type: Object,
+            observer: '_formatPo2DataForChart'
+        },
+        rawPo3Data: {
+            type: Object,
+            observer: '_formatPo3DataForChart'
+        },
+        potimeseriesQuery: {
+            type: Object,
+            value: function() {
+            	var d = new Date();
+            	var currentTime = d.getTime();
+            	//console.log("currentTime:" + currentTime);
+            	//1488737454000
+              return {
+            	  "cache_time": 0,
+            	  "tags": [
+            	    {
+            	      "name": "turbine1_poweroutput",
+            	      "order": "desc"
+            	    },
+            	    {
+            	      "name": "turbine2_poweroutput",
+            	      "order": "desc"
+            	    },
+            	    {
+            	      "name": "turbine3_poweroutput",
+            	      "order": "desc"
+            	    }
+            	  ],
+            	  "start": "5mi-ago",
+            	  "end": currentTime
+            	};
+            }
+          },
+        po1timeseriesQuery: {
+          type: Object,
+          value: function() {
+            return {
+              "start": "5mi-ago", //"1d-ago, 1h-ago, 1y-ago, 10mi-ago"
+              "tags": [
+                {
+                  "name": "turbine1_poweroutput"
+                }
+              ]
+            };
+          }
+        },
+        po2timeseriesQuery: {
+            type: Object,
+            value: function() {
+              return {
+                "start": "5mi-ago", //"1d-ago, 1h-ago, 1y-ago, 10mi-ago"
+                "tags": [
+                  {
+                    "name": "turbine2_poweroutput"
+                  }
+                ]
+              };
+            }
+          },
+         po3timeseriesQuery: {
+              type: Object,
+              value: function() {
+                return {
+                  "start": "5mi-ago", //"1d-ago, 1h-ago, 1y-ago, 10mi-ago"
+                  "tags": [
+                    {
+                      "name": "turbine3_poweroutput"
+                    }
+                  ]
+                };
+              }
+         },
+         wsChartData: {
+          type: Array,
+          notify: true
+        },
+        rawWsData: {
+          type: Object,
+          observer: '_formatWsDataForChart'
+        },
+        wstimeseriesQuery: {
+          type: Object,
+          value: function() {
+            return {
+              "start": "5mi-ago", //"1d-ago, 1h-ago, 1y-ago, 10mi-ago"
+              "tags": [
+                {
+                  "name": "turbine1_windspeed" //turbine1_windspeed Compressor-2015:CompressionRatio
+                }
+              ]
+            };
+          }
+        }
+      }, 
+	
+      _formatPoDataForChart: function(raw) {
+        var series = [];
+        var datapoints1 = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+        var datapoints2 = raw.tags[1].results[0].values || raw.tags[0].results[0].datapoints;
+        var datapoints3 = raw.tags[2].results[0].values || raw.tags[0].results[0].datapoints;
+        
+        var timestamp;
+        var value1;
+        var value2;
+        var value3;
+        
+        for(var i = 0; i < datapoints1.length; i++) {
+            var obj = datapoints1[i];
+			var obj2 = datapoints2[i];
+			var obj3 = datapoints3[i];
+			
+			try {
+				timestamp = obj[0];
+	            value1 = obj[1];
+	            value2 = obj2[1];
+	            value3 = obj3[1];
+	            
+	            series.push({x: timestamp, Turbine1: value1, Turbine2: value2, Turbine3: value3});
+			}
+			catch (e) {
+				
+			}
+        }
+        
+        this.set('po1ChartData', series); 
+      },
+      
+      _formatPo1DataForChart: function(raw) {
+        var series = [];
+        var datapoints = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+        datapoints.forEach(function(point) {
+          series.push({x: point[0], y: point[1]});
+          Polymer.globalsManager.set('gaugeValue1', point[1]);
+        });
+      },
+      
+      _formatPo2DataForChart: function(raw) {
+        var series = [];
+        var datapoints = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+        datapoints.forEach(function(point) {
+          series.push({x: point[0], y: point[1]});
+          Polymer.globalsManager.set('gaugeValue2', point[1]);
+        });
+      },
+      
+      _formatPo3DataForChart: function(raw) {
+        var series = [];
+        var datapoints = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+        datapoints.forEach(function(point) {
+          series.push({x: point[0], y: point[1]});
+          Polymer.globalsManager.set('gaugeValue3', point[1]);
+        }); 
+      },
+      
+      _formatWsDataForChart: function(raw) {
+          var series = [];
+          var datapoints = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+          datapoints.forEach(function(point) {
+            series.push({x: point[0], y: point[1]});
+          });
+          
+          this.set('wsChartData', series);
+       },
+      
+        /* ready: function() {
+          var self = this; */
+          
+           _updateData: function() {
+        	   this.async(function() {
+        		   this.$.poQueryElement.generateRequest();
+        		   this.$.po1QueryElement.generateRequest();
+        		   this.$.po2QueryElement.generateRequest();
+        		   this.$.po3QueryElement.generateRequest(); 
+        		   this.$.wsQueryElement.generateRequest();
+              }, 2000);
+            },
+      
+            _onResponse: function() {
+              this._updateData();
+            }
+            
+          /* setInterval(function() {
+        	   self.$.poQueryElement.generateRequest(); 
+        	self.$.po1QueryElement.generateRequest();
+            self.$.po2QueryElement.generateRequest();
+            self.$.po3QueryElement.generateRequest(); 
+            self.$.wsQueryElement.generateRequest();
+          }, 1000); 
+          
+         } */    
+      
+    });
+  </script>
+</dom-module>

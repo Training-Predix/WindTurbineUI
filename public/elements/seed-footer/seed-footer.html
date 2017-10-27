@@ -1,0 +1,59 @@
+<!-- import polymer -->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<script src="../../bower_components/polymer-global-variables/dist/polymer-global-variables.js" charset="utf-8"></script>
+<link rel="import" href="seed-footer-styles.html">
+
+<dom-module id='seed-footer'>
+  <template>
+    <style include="seed-footer-styles"></style>
+    <style>
+        #logoutButton {
+            margin-left: 5px;
+        }  
+        
+        .btn {
+            color: black !important;
+        }
+        
+        .btn style-scope seed-footer :hover {
+            color: white !important;
+            background: black;
+        }
+    </style>
+      
+    <iron-ajax url="/userinfo" id="usernameQuery" last-response="{{userDetails}}" auto></iron-ajax>
+    
+    <div class="flex flex--right footer__container">
+    	<div style="float: left;margin-right: 63%">
+            <span><img src="/user-icon.png" width="20" height="20" alt="" style="margin-right: 6px;vertical-align: middle;"></span> 
+            <span> Logged in:</span>
+            <span style="font-weight: bold; color: white">[[globals.username]]</span>
+            <span id="logoutButton">
+                <button class="btn" onclick="window.location.href='/logout'">Logout</button>
+            </span>
+        </div>
+      <ul class="list-inline">
+        <template is="dom-repeat" items=[[footerLinks]]>
+        <li><a class="footer__link" href="[[item.href]]">[[item.label]]</a></li>
+        </template>
+        <span class="footer__copy">&copy; 2017 General Electric</span>
+    </ul>
+    <div>
+  </template>
+  <script>
+  Polymer({
+	    is: 'seed-footer',
+	    properties: {
+		      footerLinks: [],
+		      userDetails: {
+		        type: Object,
+		        observer: '_getUserName'
+		      }
+	     },
+	     
+	     _getUserName: function(raw) {
+	     	Polymer.globalsManager.set('username', raw.username);
+	     }
+  });
+  </script>
+</dom-module>

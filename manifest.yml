@@ -1,0 +1,22 @@
+---
+applications:
+  - name: <yourname>-windturbine-ui # update with your name
+    buildpack: nodejs_buildpack
+    command: node server/app.js
+    path: dist
+services:
+  - <yourname>-uaa           # update with your name
+  - <yourname>-timeseries    # update with your name
+  - <yourname>-asset         # update with your name
+  - <yourname>-acs           # update with your name
+env:
+    node_env: cloud
+    uaa_service_label: predix-uaa-training
+    asset_service_label: predix-asset
+    timeseries_service_label: predix-timeseries
+    acs_service_label: predix-acs-training
+    analytics_service_label: predix-analytics
+    
+    # update the following with your info:
+    clientId: <yourname>-client
+    base64ClientCredential: base64 <your_client_id>:<your_client_secret>

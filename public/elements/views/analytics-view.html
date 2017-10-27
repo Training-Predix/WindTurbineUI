@@ -1,0 +1,123 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/px-card/px-card.html">
+<link rel="import" href="../../bower_components/px-vis-timeseries/px-vis-timeseries.html">
+<!--<link rel="import" href="../../bower_components/px-simple-bar-chart/px-simple-bar-chart.html">-->
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/px-gauge/px-gauge.html">
+<script src="../../bower_components/polymer-global-variables/dist/polymer-global-variables.js" charset="utf-8"></script>
+
+<dom-module id="analytics-view">
+  <template>
+      
+    <px-card header-text="Wind Turbine Analytics">
+		
+		<div style="margin-bottom: 35px">
+			<b>Average Power Output for all Wind Turbines</b>
+		</div>
+			
+        <center>
+            <div id='visDiv' style="padding: 10px;margin-left: 6%">
+                   <px-vis-timeseries
+                                     id="timeseriesAvgPowerOutput"
+                                     options='{
+                                         "width": "auto",
+                                         "height": "300",
+                                         "enableTooltip": "true",
+                                         "registerLocation": "center",
+                                         "selectionType": "xy",
+                                         "includeAllSeries": "true",
+                                         "prevent-resize": "true" 
+                                     }'
+                                     series-config='{"Avg Power Output": {"type":"line","x": "x","y": "y","yAxisUnit": "kW"}}'  
+                                     chart-data={{avgChartData}}
+                                      style="margin-left: 20px">
+                    </px-vis-timeseries>
+            </div>
+        </center>
+        
+        <!-- <div id='tsmain'>
+		  <div id='visDiv' style="float:left; width: 50%;margin-top: 35px;padding: 10px">
+		  	   <px-vis-timeseries
+				                 id="timeseriesAvgPowerOutput"
+				                 options='{
+				                     "width": "auto",
+				                     "height": "300",
+				                     "enableTooltip": "true",
+				                     "registerLocation": "center",
+				                     "selectionType": "xy",
+				                     "includeAllSeries": "true",
+				                     "prevent-resize": "true" 
+				                 }'
+				                 series-config='{"Avg Power Output": {"type":"line","x": "x","y": "y","yAxisUnit": "kW"}}'  
+				                 chart-data={{avgChartData}}>
+             	</px-vis-timeseries>
+		  </div>
+		  <div id='barDiv' style="float:left; width: 45%;margin-top: 35px;padding: 10px">   
+		  		<px-simple-bar-chart width="auto" height="422" chart-data={{barChartData}}  colors='["#9279AE"]' legend-labels='["Average Power Output"]' legend-order="reverse"></px-simple-bar-chart>
+		  </div>
+		</div> -->
+        
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        
+      <iron-ajax url="/predix-api/predix-timeseries/v1/datapoints" id="avgQueryElement" body="{{avgtimeseriesQuery}}" last-response="{{rawAvgData}}" method="POST" content-type="application/json" auto></iron-ajax> 
+        
+    </px-card>
+  </template>
+  <script>
+    Polymer({
+      is: 'analytics-view',
+      properties: {
+         avgChartData: {
+          type: Array,
+          notify: true
+        },/*,
+         barChartData: {
+         	type: Array,
+         	notify: true
+         },*/
+        rawAvgData: {
+          type: Object,
+          observer: '_formatAvgDataForChart'
+        },
+        avgtimeseriesQuery: {
+          type: Object,
+          value: function() {
+            return {
+              "start": "20mi-ago", //"1d-ago, 1h-ago, 1y-ago, 10mi-ago"
+              "tags": [
+                {
+                  "name": "avg_poweroutput" 
+                }
+              ]
+            };
+          }
+        }
+      }, 
+      
+      _formatAvgDataForChart: function(raw) {
+          /*var doublearr = [];
+          var barSeries = [];*/
+          var series = [];
+          var datapoints = raw.tags[0].results[0].values || raw.tags[0].results[0].datapoints;
+          
+          datapoints.forEach(function(point) {
+            series.push({x: point[0], y: point[1]});
+            /*barSeries.push(point[1]);*/
+          });
+          
+          this.set('avgChartData', series);
+          /*doublearr.push(barSeries);
+          this.set('barChartData', doublearr);*/
+       }
+      
+    });
+  </script>
+</dom-module>

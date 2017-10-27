@@ -1,0 +1,217 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/px-card/px-card.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/px-data-table/px-data-table.html" />
+<link rel="import" href="../../bower_components/px-percent-circle/px-percent-circle.html" />
+<link rel="import" href="../seed-app/seed-app-styles.html">
+
+<dom-module id="simple-asset-view">
+  <template id="template">
+	<style include="seed-app-styles"></style>
+	<style is="custom-style">
+	    #windturbineTable {
+		  --px-data-table-header-background-color: #66FF66;
+		  --px-data-table-background-color-striped--even: #E0E0E0;
+		  --px-data-table-padding-top: 50px;
+		}
+	</style>
+
+    <px-card header-text="Wind Turbine Assets" icon="fa-sitemap">
+
+      <h3>{{assetDescription}}</h3>
+
+      <px-data-table id="windturbineTable" table-data="{{assetTableData}}" striped="true" filterable="true" sortable="true" show-column-chooser="true" >
+      		<px-data-table-column name="uri" type="string" label="URI" sortable filterable></px-data-table-column>
+      		<px-data-table-column name="createdTimestamp" type="string" label="Created Timestamp" sortable></px-data-table-column>
+      		<px-data-table-column name="serial" type="string" label="Serial" sortable filterable></px-data-table-column>
+      		<px-data-table-column name="manufacturer" type="string" label="Manufacturer" sortable filterable></px-data-table-column>
+      		<px-data-table-column name="model" type="string" label="Model" sortable filterable></px-data-table-column>
+      		<px-data-table-column name="numRotorBlades" type="string" label="Rotor Blades" sortable></px-data-table-column>
+      		<px-data-table-column name="height" type="string" label="Height" sortable></px-data-table-column>
+      		<px-data-table-column name="cutInSpeed" type="string" label="Cut-in-Speed" sortable></px-data-table-column>
+      		<px-data-table-column name="cutOutSpeed" type="string" label="Cut-out-Speed" sortable></px-data-table-column>
+      		<px-data-table-column name="ratedSpeed" type="string" label="Rated Speed" sortable></px-data-table-column>
+      		<px-data-table-column name="powerCapacity" type="string" label="Power Capacity" sortable filterable></px-data-table-column>
+      		<px-data-table-column name="location" type="string" label="Location" sortable></px-data-table-column>
+      		<px-data-table-column name="sensors" type="string" label="Sensor Tags" sortable></px-data-table-column>
+      </px-data-table>
+
+      <!-- Choose one of these iron-ajax elements to load data from the source of your choice. -->
+
+      <!-- First option loads sample data from a json file in the server/sample-data directory. -->
+      <!-- mock-asset-service -->
+      <!--  <iron-ajax url="/api/predix-asset/compressor-2017" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax> -->
+      <!-- end mock-asset-service -->
+
+      <!-- Second option loads compressor data from Predix Time Series directly. -->
+      <!-- real-asset-service-->
+      <!-- <iron-ajax url="https://predix-asset.run.aws-usw02-pr.ice.predix.io/wind_turbine" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax> -->
+
+	  <iron-ajax url="/predix-api/predix-asset/wind_turbine" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax>
+
+      <!-- Third option loads jet engine data from Predix Time Series directly. -->
+      <!-- <iron-ajax url="/predix-api/predix-asset/engine" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax> -->
+
+    </px-card>
+  </template>
+  <script>
+    Polymer({
+      is: 'simple-asset-view',
+      properties: {
+        rawAssetData: {
+          	type: Object,
+          	observer: '_formatWindTurbineDataForTable'
+        },
+        assetTableData: {
+          	type: Object
+        },
+        assetDescription: {
+          	type: String
+        }
+      },
+
+      handleResponse: function (data) {
+    	  console.log('INSIDE HANDLE RESPONSE, %O', data);
+          this.acsData = data.detail.response;
+      },
+
+      _formatWindTurbineDataForTable: function(raw) {
+
+    	 var data, tData = [];
+
+    	 console.log('turbine array length: ' + raw.length);
+
+    	 var username = Polymer.globalsManager.get('username');
+		 console.log('LOGGED IN: ' + username);
+
+    	 for(var turbineraw of raw) {
+    		 var turbine = new Object();
+
+        	 turbine.uri = turbineraw.uri;
+        	 turbine.createdTimestamp = turbineraw.createdTimestamp;
+           	 turbine.serial = turbineraw.serial;
+           	 turbine.manufacturer = turbineraw.manufacturer;
+             turbine.model = turbineraw.model;
+           	 turbine.numRotorBlades = turbineraw.numRotorBlades;
+           	 turbine.height = turbineraw.height.value + ' ' + turbineraw.height.unit;
+           	 turbine.cutInSpeed = turbineraw.cutInSpeed.value + ' ' + turbineraw.cutInSpeed.unit;
+           	 turbine.cutOutSpeed = turbineraw.cutOutSpeed.value + ' ' + turbineraw.cutOutSpeed.unit;
+           	 turbine.ratedSpeed = turbineraw.ratedSpeed.value + ' ' + turbineraw.ratedSpeed.unit;
+           	 turbine.powerCapacity = turbineraw.powerCapacity.value + ' ' + turbineraw.powerCapacity.unit;
+           	 turbine.location = turbineraw.location.lat + ', ' + turbineraw.location.long;
+           	 turbine.sensors = turbineraw.sensors.poweroutput.tag + ', ' + turbineraw.sensors.windspeed.tag;
+
+           	 if(username === 'app_user_1' && turbineraw.manufacturer === '/manufacturer/GE') {
+           		tData.push(turbine);
+           	 } else if(username === 'app_user_2' && turbineraw.manufacturer === '/manufacturer/Siemens') {
+           		tData.push(turbine);
+           	 } else if(username === 'app_admin_1') {
+           		 tData.push(turbine);
+           	 }
+
+    	 }
+
+    	 this.assetTableData = tData;
+  		 this.assetDescription = "Wind Turbines";
+
+    	  var callACS = function() {
+    		 return new Promise(function(resolve,reject) {
+		    	 var makeRequest = function (method, url) {
+			       	  return new Promise(function (resolve, reject) {
+			   	    	    var xhr = new XMLHttpRequest();
+			   	    	    console.log('acsUrl: ' + url);
+			   	    	    xhr.open(method, url);
+
+			   				xhr.onreadystatechange = function (e) {
+			   	           		console.log("processRequest");
+
+			   	           		if(xhr.readyState !== 4) {
+			   	           	      	return;
+			   	           	    }
+
+			   	           	    if([200,304].indexOf(xhr.status) === -1) {
+			   	           	      	reject(new Error('Server responded with a status of ' + xhr.status));
+			   	           	    } else {
+			   	           	    	console.log('e.target.response: ' + e.target.response);
+			   	           	      	resolve(e.target.response);
+			   	           	    }
+			   	           	}
+
+			   	    	    xhr.onerror = function () {
+			   	    	      	reject({
+			   	    	        	status: this.status,
+			   	    	        	statusText: xhr.statusText
+			   	    	      	});
+			   	    	    };
+
+			   	    	    xhr.send();
+			       	  });
+		       	};
+
+		    	 var processItems = function(x) {
+		    		   if( x < raw.length ) {
+		    			   var acsURL = '/acs' + raw[x].manufacturer;
+
+		   				   var username = Polymer.globalsManager.get('username');
+		   				   console.log('LOGGED IN: ' + username);
+
+		    			   console.log('----- calling acsURL: ' + acsURL);
+
+		    			   makeRequest('GET', acsURL).then(function (response) {
+			    			   		var result = '' + response;
+			    			  		console.log('result: ' + result);
+
+			    			  		if(result === 'PERMIT') {
+			    			  			console.log('adding turbine to list, ' + raw[x].uri);
+
+			    			  			var turbine = new Object();
+
+			    			        	turbine.uri = raw[x].uri;
+			    			        	turbine.createdTimestamp = raw[x].createdTimestamp;
+			    			           	turbine.serial = raw[x].serial;
+			    			           	turbine.manufacturer = raw[x].manufacturer;
+			    			           	turbine.model = raw[x].model;
+			    			           	turbine.numRotorBlades = raw[x].numRotorBlades;
+			    			           	turbine.height = raw[x].height.value + ' ' + raw[x].height.unit;
+			    			           	turbine.cutInSpeed = raw[x].cutInSpeed.value + ' ' + raw[x].cutInSpeed.unit;
+			    			           	turbine.cutOutSpeed = raw[x].cutOutSpeed.value + ' ' + raw[x].cutOutSpeed.unit;
+			    			           	turbine.ratedSpeed = raw[x].ratedSpeed.value + ' ' + raw[x].ratedSpeed.unit;
+			    			           	turbine.powerCapacity = raw[x].powerCapacity.value + ' ' + raw[x].powerCapacity.unit;
+			    			           	turbine.location = raw[x].location.lat + ', ' + raw[x].location.long;
+			    			           	turbine.sensors = raw[x].sensors.poweroutput.tag + ', ' + raw[x].sensors.windspeed.tag;
+
+			    			  			tData.push(turbine);
+			    			  		}
+
+			    			  		processItems(x+1);
+
+		    			   }).catch(reason => {
+		    				   console.log('REASON: ' + reason);
+		    			   });
+		    		   }
+		    	 }
+
+		    	 processItems(0);
+
+		    	 resolve('#done');
+    	 	});
+     	 };
+
+     	var self = this;
+     	callACS().then(function (response) {
+     		 console.log('ACS METHOD REPONSE: ' + response);
+     		self.assetTableData = tData;
+     		self.assetDescription = "Wind Turbines";
+
+    		 Polymer.globalsManager.set('globalTableData', tData);
+    		 console.log('assetTableData2: %O', self.assetTableData);
+
+     	 }).catch(reason => { //.bind(this)
+			   console.log('REASON2: ' + reason);
+		 });
+
+      }
+
+    });
+  </script>
+</dom-module>

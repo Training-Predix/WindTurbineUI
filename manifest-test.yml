@@ -1,0 +1,20 @@
+---
+applications:
+  - name: st1-windturbine-ui
+    buildpack: nodejs_buildpack
+    command: node server/app.js
+    path: dist
+services:
+  - st1-uaa
+  - st1-timeseries
+  - st1-asset
+  - st1-acs
+env:
+    node_env: cloud
+    uaa_service_label: predix-uaa-training
+    asset_service_label: predix-asset
+    timeseries_service_label: predix-timeseries
+    acs_service_label: predix-acs-training
+    analytics_service_label: predix-analytics
+    clientId: st1-client
+    base64ClientCredential: c3QxLWNsaWVudDpzZWNyZXQ=

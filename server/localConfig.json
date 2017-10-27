@@ -1,0 +1,21 @@
+{
+  "development": {
+    "note": "Out of the box, the predix-seed app uses mock data, so these values are not required.  Set these values for connecting to real Predix services.",
+    "clientId": "sharatwt-client",
+    "uaaURL": "https://6ec21cc3-30f9-479e-bd67-3c04427ac9cb.predix-uaa.run.aws-usw02-pr.ice.predix.io",
+    "base64ClientCredential": "c2hhcmF0d3QtY2xpZW50OnNlY3JldA==",
+    "appURL": "http://localhost:5000",
+    "timeseriesURL": "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/datapoints",
+    "timeseriesZoneId": "976c4480-03f0-4186-882a-c28faa0da412",
+    "assetURL": "https://predix-asset.run.aws-usw02-pr.ice.predix.io",
+    "assetZoneId": "7d0f18aa-be02-4c54-bbf7-b7b542309a2c",
+    "acsURL": "https://predix-acs-training.run.aws-usw02-pr.ice.predix.io",
+    "acsZoneId": "b5a3622f-1ebf-4186-9423-19b4919b009d",
+    "uaaServiceLabel":"predix-uaa",
+    "assetServiceLabel":"predix-asset",
+    "timeseriesServiceLabel":"predix-timeseries",
+    "acsServiceLabel":"predix-acs",
+    "analyticsServiceLabel":"predix-analytics",
+    "windServiceURL": "{URL of the microservice <your-name>-winddata-timeseries-service}, e.g.  https://your-name-winddata-timeseries-service.run.asw-usw02-pr.predix.io"
+  }
+}
